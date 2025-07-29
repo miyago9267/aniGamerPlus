@@ -12,29 +12,25 @@ import Config
 
 
 def read_log_settings():
-    settings = {}
     try:
         with open(Config.get_config_path(), 'r', encoding='utf-8') as f:
-            # 转义win路径
-            settings = json.loads(re.sub(r'\\', '\\\\\\\\', f.read()))
+            return json.load(f)
     except json.JSONDecodeError:
-        Config.del_bom(Config.get_config_path(), display=False)  # 移除bom
-        # 重新载入
-        with open(Config.get_config_path(), 'r', encoding='utf-8') as f:
-            settings = json.loads(re.sub(r'\\', '\\\\\\\\', f.read()))
-    except BaseException as e:
-        settings['save_logs'] = True
-        settings['quantity_of_logs'] = 7
-        print('日志配置讀取失敗, 將使用默認配置: 啓用日志, 最多保存7份 '+str(e))
-    if 'save_logs' not in settings.keys():
-        settings['save_logs'] = True
-    if 'quantity_of_logs' not in settings.keys():
-        settings['quantity_of_logs'] = 7
-    return settings
-
+        try:
+            Config.del_bom(Config.get_config_path(), display=False)  # 移除BOM
+            with open(Config.get_config_path(), 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print('修正 BOM 後仍讀取失敗，將使用預設配置: ' + str(e))
+    except Exception as e:
+        print('讀取 log 設定失敗，將使用預設配置: ' + str(e))
+    
+    return {
+        'save_logs': True,
+        'quantity_of_logs': 7
+    }
 
 log_settings = read_log_settings()
-
 
 def err_print(sn, err_msg, detail='', status=0, no_sn=False, prefix='', display=True, display_time=True):
     # status 三个设定值, 0 为一般输出, 1 为错误输出, 2 为成功输出
